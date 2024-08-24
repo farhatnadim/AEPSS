@@ -1,7 +1,7 @@
 {
     "model_dir": "./PVS/v1/T1.PVS",
-    "image_dir": "./images",
-    "output_dir": "./predicted",
+    "image_dir": "/mnt/d/Postdoc_data/Epvs/images",
+    "masks_dir": "/mnt/d/Postdoc_data/Epvs/masks",
     "gpu": 0,
     "verbose": true,
     "models": [
@@ -11,8 +11,7 @@
       "20211030-162753_Unet3Dv2-10.7.2-1.8-T1.VRS_fold_1x6_pi_fold_3_model.h5",
       "20211030-162753_Unet3Dv2-10.7.2-1.8-T1.VRS_fold_1x6_pi_fold_4_model.h5",
       "20211030-162753_Unet3Dv2-10.7.2-1.8-T1.VRS_fold_1x6_pi_fold_5_model.h5"
-    ],
-    "input_image": "output.nii",
-    "output_image": "test.nii"
+    ]
+    
   }
   
