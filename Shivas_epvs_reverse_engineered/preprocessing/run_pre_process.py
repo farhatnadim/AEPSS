@@ -71,14 +71,45 @@ def center_brain(image, brain_mask=None):
 
     return sitk.GetImageFromArray(centered_array)
 
-def process_nifti_image(input_path, output_path, target_shape=(160, 214, 176), apply_brain_mask=True):
-    # Load the NIfTI image using SimpleITK
-    nifti_img = sitk.ReadImage(input_path)
+def register_t2_to_hires(hires_image, t2_image):
+    """Register T2 image to Hires image using affine registration."""
+    registration_method = sitk.ImageRegistrationMethod()
+    registration_method.SetMetricAsMattesMutualInformation(numberOfHistogramBins=50)
+    registration_method.SetOptimizerAsGradientDescent(learningRate=0.0001, numberOfIterations=100)
+    registration_method.SetInitialTransform(sitk.AffineTransform(3))
+    registration_method.SetInterpolator(sitk.sitkLinear)
 
-   
+    final_transform = registration_method.Execute(sitk.Cast(hires_image, sitk.sitkFloat32),
+                                                  sitk.Cast(t2_image, sitk.sitkFloat32))
+
+    return sitk.Resample(t2_image, hires_image, final_transform, sitk.sitkLinear, 0.0, t2_image.GetPixelID())
+
+def divide_hires_by_t2(hires_image, t2_image):
+    """Divide Hires image by T2 image voxelwise."""
+    hires_array = sitk.GetArrayFromImage(hires_image)
+    t2_array = sitk.GetArrayFromImage(t2_image)
+    
+    # Avoid division by zero
+    t2_array[t2_array == 0] = 1e-6
+    # ensure float division
+    
+    result_array = np.float32(hires_array)/ np.float32(t2_array)
+    return sitk.GetImageFromArray(result_array)
+
+def process_nifti_image(hires_path, t2_path, output_path, target_shape=(160, 214, 176), apply_brain_mask=True):
+    # Load the Hires and T2 NIfTI images
+    hires_img = sitk.ReadImage(hires_path)
+    t2_img = sitk.ReadImage(t2_path)
+
+    # Register T2 to Hires
+    registered_t2 = register_t2_to_hires(hires_img, t2_img)
+    # save the registered t2 image
+    sitk.WriteImage(registered_t2, output_path.parent / f"{output_path.stem}_registered.nii")
+    # Divide Hires by registered T2
+    divided_img = divide_hires_by_t2(hires_img, registered_t2)
 
     # Resize the image to target shape
-    resized_image = resize_image(nifti_img, target_shape)
+    resized_image = resize_image(divided_img, target_shape)
 
     # Normalize voxel values
     normalized_image = normalize_image(resized_image)
@@ -87,16 +118,21 @@ def process_nifti_image(input_path, output_path, target_shape=(160, 214, 176), a
     centered_image = center_brain(normalized_image)
 
     # Set metadata (direction, spacing, origin) from the original image
-    centered_image.SetDirection(nifti_img.GetDirection())
+    centered_image.SetDirection(hires_img.GetDirection())
     centered_image.SetSpacing([1.0, 1.0, 1.0])  # Set isotropic spacing (1mm³)
-    centered_image.SetOrigin(nifti_img.GetOrigin())
+    centered_image.SetOrigin(hires_img.GetOrigin())
 
     # Save the processed image
     sitk.WriteImage(centered_image, output_path)
+
 def main():
-    config = load_config('preprocessing/config.json')
-    image_dir = Path(config['image_dir'])
-    output_dir = Path(config['images_output_dir'])
+    # load the config file which is expected to be in the parent directory
+    config_path = Path(__file__).parent.parent / 'config.json'
+    config = load_config(config_path)
+
+    # get the image directory and the output directory from the config file
+    image_dir = Path(config['raw_image_dir'])
+    output_dir = Path(config['enhanced_images_output_dir'])
     output_prefix = config['output_image_prefix']
     verbose = config['verbose']
 
@@ -106,12 +142,13 @@ def main():
         if subject_dir.is_dir():
             for scan_dir in subject_dir.iterdir():
                 if scan_dir.is_dir():
-                    input_file = next(scan_dir.glob('*_Hires.nii'), None)
-                    if input_file:
+                    hires_file = next(scan_dir.glob('*_Hires.nii'), None)
+                    t2_file = next(scan_dir.glob('*_T2.nii'), None)
+                    if hires_file and t2_file:
                         output_file = output_dir / f"{scan_dir.name}_{output_prefix}.nii"
-                        process_nifti_image(input_file, output_file)
+                        process_nifti_image(hires_file, t2_file, output_file)
                         if verbose:
-                            print(f"Preprocessed: {input_file} -> {output_file}")
+                            print(f"Preprocessed: {hires_file} and {t2_file} -> {output_file}")
 
 if __name__ == "__main__":
     main()

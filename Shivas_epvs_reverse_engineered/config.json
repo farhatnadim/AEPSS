@@ -1,17 +1,23 @@
-{
-    "model_dir": "./PVS/v1/T1.PVS",
-    "image_dir": "/mnt/d/Postdoc_data/Epvs/images",
-    "masks_dir": "/mnt/d/Postdoc_data/Epvs/masks",
-    "gpu": 0,
-    "verbose": true,
-    "models": [
+{ 
+
+  "raw_image_dir": "/mnt/d/Postdoc_data/MSBRAIN_1/MSBrain_7108",
+  "enhanced_images_output_dir": "/mnt/d/Postdoc_data/Epvs/images_enhanced",
+  "output_image_prefix": "preprocessed_enhanced",
+  "model_dir": "/mnt/d/Postdoc_data/Epvs/v1/T1.PVS",
+  "preprocessed_image_dir": "/mnt/d/Postdoc_data/Epvs/images",
+  "probabilistic_masks_dir": "/mnt/d/Postdoc_data/Epvs/masks",
+  "thresholded_masks_dir": "/mnt/d/Postdoc_data/Epvs/masks_thresholded",
+  "gpu": 0,
+  "verbose": true,
+  "models": [
       "20211030-162753_Unet3Dv2-10.7.2-1.8-T1.VRS_fold_1x6_pi_fold_0_model.h5",
       "20211030-162753_Unet3Dv2-10.7.2-1.8-T1.VRS_fold_1x6_pi_fold_1_model.h5",
       "20211030-162753_Unet3Dv2-10.7.2-1.8-T1.VRS_fold_1x6_pi_fold_2_model.h5",
       "20211030-162753_Unet3Dv2-10.7.2-1.8-T1.VRS_fold_1x6_pi_fold_3_model.h5",
       "20211030-162753_Unet3Dv2-10.7.2-1.8-T1.VRS_fold_1x6_pi_fold_4_model.h5",
       "20211030-162753_Unet3Dv2-10.7.2-1.8-T1.VRS_fold_1x6_pi_fold_5_model.h5"
-    ]
-    
+    ],
+  
+  "mask_threshold": 0.5
   }
   
